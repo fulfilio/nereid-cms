@@ -13,7 +13,7 @@ from datetime import datetime
 from nereid import context_processor
 from nereid import (
     render_template, request, login_required, jsonify, redirect, flash,
-    abort, route
+    abort, route, current_user, current_website
 )
 from nereid.helpers import slugify, url_for
 from nereid.contrib.pagination import Pagination
@@ -279,7 +279,7 @@ class BannerCategory(ModelSQL, ModelView):
         """
         category = cls.search([
             ('name', '=', uri),
-            ('website', '=', request.nereid_website.id)
+            ('website', '=', current_website.id)
         ], limit=1)
         if not category and not silent:
             raise RuntimeError("Banner category %s not found" % uri)
@@ -817,13 +817,13 @@ class Article(Workflow, ModelSQL, ModelView, CMSMenuItemMixin):
         if user.employee:
             return user.employee.id
 
-        if has_request_context() and request.nereid_user.employee:
-            return request.nereid_user.employee.id
+        if has_request_context() and current_user.employee:
+            return current_user.employee.id
 
     @staticmethod
     def default_author():
         if has_request_context():
-            return request.nereid_user.id
+            return current_user.id
 
     @staticmethod
     def default_published_on():
@@ -900,7 +900,7 @@ class Article(Workflow, ModelSQL, ModelView, CMSMenuItemMixin):
         Returns an atom ID for the article
         """
         return (
-            'tag:' + request.nereid_website.name + ',' +
+            'tag:' + current_website.name + ',' +
             self.publish_date + ':Article/' + str(self.id)
         )
 
@@ -1021,7 +1021,7 @@ class Website:
         file = request.files['file']
         if file:
             static_file = StaticFile.create({
-                'folder': request.nereid_website.cms_static_folder,
+                'folder': current_website.cms_static_folder,
                 'name': '_'.join([
                     str(int(time.time())),
                     secure_filename(file.filename),
@@ -1049,7 +1049,7 @@ class Website:
 
         files = Pagination(
             StaticFile, [
-                ('folder', '=', request.nereid_website.cms_static_folder.id)
+                ('folder', '=', current_website.cms_static_folder.id)
             ], page, 10
         )
         return jsonify(items=[
