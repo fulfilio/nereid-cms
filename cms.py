@@ -1021,7 +1021,7 @@ class Website:
 
         file = request.files['file']
         if file:
-            static_file = StaticFile.create({
+            static_file, = StaticFile.create([{
                 'folder': current_website.cms_static_folder,
                 'name': '_'.join([
                     str(int(time.time())),
@@ -1029,7 +1029,7 @@ class Website:
                 ]),
                 'type': upload_type,
                 'file_binary': file.read(),
-            })
+            }])
             if request.is_xhr:
                 return jsonify(success=True, item=static_file.serialize())
 
